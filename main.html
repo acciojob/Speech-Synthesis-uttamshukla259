@@ -7,37 +7,68 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="voiceinator">
+    <h1>The Voiceinator 5000</h1>
+    <select name="voice" id="voices"></select>
+    <label for="rate">Rate:</label>
+    <input name="rate" type="range" min="0" max="3" value="1" step="0.1">
+    <label for="pitch">Pitch:</label>
+    <input name="pitch" type="range" min="0" max="2" value="1" step="0.1">
+    <textarea name="text">Hello, World!</textarea>
+    <button id="speak">Speak</button>
+    <button id="stop">Stop</button>
+  </div>
 
-    <div class="voiceinator">
+  <script>
+    const synth = window.speechSynthesis;
+    let voices = [];
 
-      <h1>The Voiceinator 5000</h1>
+    const getVoices = () => {
+      voices = synth.getVoices();
 
-      <select name="voice" id="voices">
-        <option value="">Select A Voice</option>
-      </select>
+      voices.forEach((voice) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.setAttribute('data-lang', voice.lang);
+        option.setAttribute('data-name', voice.name);
+        document.querySelector('#voices').appendChild(option);
+      });
+    };
 
-      <label for="rate">Rate:</label>
-      <input name="rate" type="range" min="0" max="3" value="1" step="0.1">
+    getVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = getVoices;
+    }
 
-      <label for="pitch">Pitch:</label>
+    const speak = () => {
+      if (synth.speaking) {
+        console.error('Already speaking...');
+        return;
+      }
 
-      <input name="pitch" type="range" min="0" max="2" step="0.1">
-      <textarea name="text">Hello! I love JavaScript 👍</textarea>
-      <button id="stop">Stop!</button>
-      <button id="speak">Speak</button>
+      const utterance = new SpeechSynthesisUtterance(document.querySelector('[name="text"]').value);
+      const selectedVoice = document.querySelector('#voices').selectedOptions[0].getAttribute('data-name');
+      voices.forEach((voice) => {
+        if (voice.name === selectedVoice) {
+          utterance.voice = voice;
+        }
+      });
 
-    </div>
+      utterance.rate = document.querySelector('[name="rate"]').value;
+      utterance.pitch = document.querySelector('[name="pitch"]').value;
 
-<script>
-  const msg = new SpeechSynthesisUtterance();
-  let voices = [];
-  const voicesDropdown = document.querySelector('[name="voice"]');
-  const options = document.querySelectorAll('[type="range"], [name="text"]');
-  const speakButton = document.querySelector('#speak');
-  const stopButton = document.querySelector('#stop');
+      synth.speak(utterance);
+    };
 
-  //Your code goes here
-</script>
+    const stop = () => {
+      if (synth.speaking) {
+        synth.cancel();
+      }
+    };
 
+    document.querySelector('#speak').addEventListener('click', speak);
+    document.querySelector('#stop').addEventListener('click', stop);
+  </script>
 </body>
 </html>
+
